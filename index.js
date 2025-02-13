@@ -35,7 +35,7 @@ const getRandomComment = async (channelId, token) => {
                 return comment;
             }
         } else {
-             console.log(chalk.red(`[✖] Failed to fetch messages from ${channelId}: ${response.status}`));
+             //console.log(chalk.red(`[✖] Failed to fetch messages from ${channelId}: ${response.status}`));
         }
     } catch (error) {
         console.log(chalk.red(`[✖] Error fetching messages: ${error.message}`));
@@ -59,7 +59,7 @@ const sendMessage = async (channelId, content, token) => {
             await new Promise(resolve => setTimeout(resolve, retryAfter * 1000));
             await sendMessage(channelId, content, token);
         } else {
-             console.log(chalk.red(`[✖] Failed to send message to ${channelId}: ${response.status}`));
+            // console.log(chalk.red(`[✖] Failed to send message to ${channelId}: ${response.status}`));
         }
     } catch (error) {
         console.log(chalk.red(`[✖] Error sending message: ${error.message}`));
