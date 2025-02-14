@@ -14,10 +14,19 @@ import cfonts from 'cfonts';
       maxLength: '0',
     });
     console.log(chalk.green("=== Telegram Channel : NT Exhaust ( @NTExhaust ) ==="));
-const channelIds = readline.question("Masukkan ID channel (pisahkan dengan koma untuk banyak channel): ").split(',');
+const channelIds = readline.question("Masukkan ID channel (pisahkan dengan koma untuk banyak channel): ").split(',').map(id => id.trim());
+const deleteOption = readline.question("Ingin menghapus pesan setelah dikirim? (yes/no): ").toLowerCase() === 'yes';
+const waktuKirim = parseInt(readline.question("Set Waktu Delay Kirim Pesan (dalam detik): ")) * 1000;
+let waktuHapus = 0;
+let waktuSetelahHapus = 0;
 
-const delay1 = parseInt(readline.question("How many delay(Slowmode): "));
+if (deleteOption) {
+    waktuHapus = parseInt(readline.question("Set Waktu Delay Hapus Pesan (dalam detik): ")) * 1000;
+    waktuSetelahHapus = parseInt(readline.question("Set Waktu Delay Setelah Hapus Pesan (dalam detik): ")) * 1000;
+}
+
 const tokens = fs.readFileSync("token.txt", "utf-8").split('\n').map(token => token.trim());
+
 const getRandomComment = async (channelId, token) => {
     try {
         const response = await fetch(`https://discord.com/api/v9/channels/${channelId}/messages`, {
@@ -34,13 +43,9 @@ const getRandomComment = async (channelId, token) => {
                 }
                 return comment;
             }
-        } else {
-             //console.log(chalk.red(`[✖] Failed to fetch messages from ${channelId}: ${response.status}`));
         }
-    } catch (error) {
-        console.log(chalk.red(`[✖] Error fetching messages: ${error.message}`));
-    }
-    return null;
+    } catch (error) {}
+    return "Generated Message";
 };
 
 const sendMessage = async (channelId, content, token) => {
@@ -52,33 +57,44 @@ const sendMessage = async (channelId, content, token) => {
         });
         
         if (response.ok) {
+            const messageData = await response.json();
             console.log(chalk.green(`[✔] Message sent to ${channelId}: ${content}`));
+            return messageData.id;
         } else if (response.status === 429) {
-            console.log(chalk.yellow(`[⚠] Rate limited! Waiting before retrying...`));
             const retryAfter = (await response.json()).retry_after;
             await new Promise(resolve => setTimeout(resolve, retryAfter * 1000));
-            await sendMessage(channelId, content, token);
-        } else {
-            // console.log(chalk.red(`[✖] Failed to send message to ${channelId}: ${response.status}`));
+            return sendMessage(channelId, content, token);
         }
-    } catch (error) {
-        console.log(chalk.red(`[✖] Error sending message: ${error.message}`));
-    }
+    } catch (error) {}
+    return null;
 };
 
-
+const deleteMessage = async (channelId, messageId, token) => {
+    try {
+        await new Promise(resolve => setTimeout(resolve, waktuHapus));
+        const delResponse = await fetch(`https://discord.com/api/v9/channels/${channelId}/messages/${messageId}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': token }
+        });
+        if (delResponse.ok) {
+            console.log(chalk.blue(`[✔] Deleted message ${messageId} in channel ${channelId}`));
+        }
+        await new Promise(resolve => setTimeout(resolve, waktuSetelahHapus));
+    } catch (error) {}
+};
 
 (async () => {
     while (true) {
-        await Promise.all(tokens.map(async token => {
+        for (const token of tokens) {
             for (const channelId of channelIds) {
-                const randomComment = await getRandomComment(channelId.trim(), token);
-                const messageContent = randomComment
-                await sendMessage(channelId.trim(), messageContent, token);
-                await new Promise(resolve => setTimeout(resolve, delay1 * 1000));
-                // await deleteMessage(channelId.trim(), token);
-                // await new Promise(resolve => setTimeout(resolve, waktu2 * 1000));
+                const randomComment = await getRandomComment(channelId, token);
+                const messageId = await sendMessage(channelId, randomComment, token);
+                await new Promise(resolve => setTimeout(resolve, waktuKirim));
+                
+                if (deleteOption && messageId) {
+                    await deleteMessage(channelId, messageId, token);
+                }
             }
-        }));
+        }
     }
 })();
