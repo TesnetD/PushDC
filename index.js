@@ -59,6 +59,10 @@ const sendMessage = async (channelId, content, token) => {
         if (response.ok) {
             const messageData = await response.json();
             console.log(chalk.green(`[✔] Message sent to ${channelId}: ${content}`));
+            if (deleteOption) {
+                await new Promise(resolve => setTimeout(resolve, waktuHapus));
+                await deleteMessage(channelId, messageData.id, token);
+            }
             return messageData.id;
         } else if (response.status === 429) {
             const retryAfter = (await response.json()).retry_after;
@@ -71,7 +75,6 @@ const sendMessage = async (channelId, content, token) => {
 
 const deleteMessage = async (channelId, messageId, token) => {
     try {
-        await new Promise(resolve => setTimeout(resolve, waktuHapus));
         const delResponse = await fetch(`https://discord.com/api/v9/channels/${channelId}/messages/${messageId}`, {
             method: 'DELETE',
             headers: { 'Authorization': token }
@@ -88,12 +91,8 @@ const deleteMessage = async (channelId, messageId, token) => {
         for (const token of tokens) {
             for (const channelId of channelIds) {
                 const randomComment = await getRandomComment(channelId, token);
-                const messageId = await sendMessage(channelId, randomComment, token);
+                await sendMessage(channelId, randomComment, token);
                 await new Promise(resolve => setTimeout(resolve, waktuKirim));
-                
-                if (deleteOption && messageId) {
-                    await deleteMessage(channelId, messageId, token);
-                }
             }
         }
     }
