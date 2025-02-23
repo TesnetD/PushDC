@@ -3,7 +3,7 @@ import readline from 'readline-sync';
 import fs from 'fs';
 import chalk from 'chalk';
 import cfonts from 'cfonts';
-    cfonts.say('NT Exhaust', {
+    cfonts.say('END AIRDROP', {
       font: 'block',
       align: 'center',
       colors: ['cyan', 'magenta'],
@@ -13,7 +13,7 @@ import cfonts from 'cfonts';
       space: true,
       maxLength: '0',
     });
-    console.log(chalk.green("=== Telegram Channel : NT Exhaust ( @NTExhaust ) ==="));
+    console.log(chalk.green("=== Telegram Channel :END AIRDROP ( @endingdrop ) ==="));
 const channelIds = readline.question("Masukkan ID channel (pisahkan dengan koma untuk banyak channel): ").split(',').map(id => id.trim());
 const deleteOption = readline.question("Ingin menghapus pesan setelah dikirim? (yes/no): ").toLowerCase() === 'yes';
 const waktuKirim = parseInt(readline.question("Set Waktu Delay Kirim Pesan (dalam detik): ")) * 1000;
